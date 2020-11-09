@@ -15,15 +15,6 @@ export function addHuman(human: any): humanAction {
     };
 }
 
-// // Async Function expample with redux-thunk
-// export function completeTodo(todoId: number) {
-//     // here you could do API eg
-
-//     return (dispatch: Function, getState: Function) => {
-//         dispatch({ type: userActions.COMPLETE_TODO, payload: todoId });
-//     };
-// }
-
 export function editHuman(todoId: number): humanAction {
     return {
         type: userActions.UPDATE_HUMAN,

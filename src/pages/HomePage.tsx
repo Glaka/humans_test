@@ -14,6 +14,7 @@ import AddHumanComponent from '../components/AddHumanComponent/AddHumanComponent
 
 const HomePage = () => {
     const [selectedHuman, setSelectedHuman] = useState<any>(null);
+    const [filterValue, setFilterValue] = useState<string>('');
     const [filteredHumans, setFilteredHumans] = useState<any>(null);
     const [showModal, setShowModal] = useState(false);
     const allHumans = useSelector((state: any) => state.humanReducer);
@@ -27,8 +28,8 @@ const HomePage = () => {
         localStorage.setItem('humans', stringifiedHumans);
     }, [allHumans]);
 
-    const handleChange = (e: any) => {
-        // console.log(e.target.value);
+    const handleFilterChange = (e: any) => {
+        setFilterValue(e.target.value);
     };
 
     const handleSelectHuman = (id: string) => {
@@ -45,8 +46,7 @@ const HomePage = () => {
         dispatch(addHuman(humanData));
     };
 
-    const handleDelete = (id: any) => {
-        console.log('delete id ', id);
+    const handleDelete = (id: string) => {
         dispatch(deleteHuman(id));
         setSelectedHuman(null);
     };
@@ -57,6 +57,22 @@ const HomePage = () => {
         dispatch(getHumans(localStorageHumans));
     }, [dispatch]);
 
+    const filterHumans = useCallback(() => {
+        if (!filterValue) return setFilteredHumans(allHumans);
+
+        const filterResult = Object.keys(allHumans).reduce((acc, item) => {
+            const itemNameLower = allHumans[item].name.toLowerCase();
+            const filterLower = filterValue.toLowerCase();
+            // return itemNameLower.includes(filterLower);
+            if (itemNameLower.includes(filterLower)) {
+                return { ...acc, [item]: allHumans[item] };
+            } else {
+                return acc;
+            }
+        }, {});
+        setFilteredHumans(filterResult);
+    }, [allHumans, filterValue]);
+
     useEffect(() => {
         handleGetHumans();
     }, [handleGetHumans]);
@@ -65,15 +81,20 @@ const HomePage = () => {
         updateLocalStorage();
     }, [allHumans, updateLocalStorage]);
 
+    useEffect(() => {
+        filterHumans();
+    }, [allHumans, filterHumans]);
+
     return (
         <div className="HomePage">
             <Container>
                 <Row>
                     <Col sm={3}>
                         <FormControl
+                            value={filterValue}
                             placeholder="Search.."
-                            onChange={(e) => handleChange(e)}
-                            className="mt-1 mb-1"
+                            onChange={(e) => handleFilterChange(e)}
+                            className="mt-3 mb-1"
                             aria-label="Username"
                             aria-describedby="basic-addon1"
                         />
@@ -85,34 +106,31 @@ const HomePage = () => {
                         >
                             New Human
                         </Button>
-                        {allHumans && (
+                        {filteredHumans && (
                             <ListGroup>
-                                {Object.keys(allHumans).map((human: any) => {
-                                    return (
-                                        <ListGroup.Item
-                                            key={human}
-                                            style={{ cursor: 'pointer' }}
-                                            onClick={() => {
-                                                handleSelectHuman(human);
-                                            }}
-                                        >
-                                            {allHumans[human].name}
-                                        </ListGroup.Item>
-                                    );
-                                })}
+                                {Object.keys(filteredHumans).map(
+                                    (human: any) => {
+                                        return (
+                                            <ListGroup.Item
+                                                key={human}
+                                                style={{ cursor: 'pointer' }}
+                                                onClick={() => {
+                                                    handleSelectHuman(human);
+                                                }}
+                                            >
+                                                {filteredHumans[human].name}
+                                            </ListGroup.Item>
+                                        );
+                                    }
+                                )}
                             </ListGroup>
                         )}
                     </Col>
                     <Col sm={9}>
                         {!!selectedHuman ? (
-                            <>
-                                <p>
-                                    Selected human:
-                                    {allHumans[selectedHuman]?.name}
-                                    {selectedHuman}
-                                </p>
-                                <p>
-                                    id {Object.keys(allHumans[selectedHuman])}
+                            <div className="mt-2">
+                                <p className="h2 mb-2">
+                                    {`Selected human: ${allHumans[selectedHuman]?.name}`}
                                 </p>
                                 <Button
                                     variant="danger"
@@ -120,9 +138,9 @@ const HomePage = () => {
                                 >
                                     Delete
                                 </Button>
-                            </>
+                            </div>
                         ) : (
-                            <p>Select human</p>
+                            <p className="h2 mt-2 mb-2">Select human</p>
                         )}
                     </Col>
                 </Row>
